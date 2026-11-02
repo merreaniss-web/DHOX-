@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#08090d">
+<title>ANISS LIVE — Show Control</title>
+<style>
+:root{--bg:#08090d;--panel:#12151d;--line:#282d39;--muted:#9aa3b5;--white:#f4f6fb;--cyan:#62e6dc;--red:#ff5964;--gold:#ffc86b}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -20%,#25283a 0,#08090d 55%);color:var(--white);font:15px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{padding:24px 18px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#08090ded;backdrop-filter:blur(18px);z-index:4}
+.kicker{color:var(--cyan);font-size:11px;letter-spacing:3px;font-weight:800}.head{display:flex;align-items:center;justify-content:space-between;gap:10px}h1{font-size:25px;letter-spacing:1px;margin:6px 0 0}.live{border:1px solid #315d59;color:var(--cyan);border-radius:99px;padding:7px 10px;font-size:11px;font-weight:800}
+main{max-width:1100px;margin:auto;padding:16px;display:grid;gap:15px}.grid{display:grid;grid-template-columns:1.15fr .85fr;gap:15px}.panel{background:linear-gradient(145deg,#171b25,#10131a);border:1px solid var(--line);border-radius:17px;padding:16px;box-shadow:0 12px 40px #0005}
+h2{font-size:13px;letter-spacing:1.5px;color:var(--muted);margin:0 0 13px}.now{font-size:23px;font-weight:800;margin:5px 0}.sub{color:var(--muted);font-size:12px}.controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+button{background:#202634;border:1px solid #343c4b;color:var(--white);padding:11px 14px;border-radius:10px;font-weight:750;font-size:13px}button.primary{background:var(--cyan);color:#061211;border:0}button.danger{background:#3a1b23;border-color:#74303b;color:#ff929a}button:active{transform:scale(.98)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:15px}.stat{background:#0c0f15;border:1px solid var(--line);border-radius:11px;padding:10px}.stat b{display:block;font-size:19px}.stat span{font-size:10px;color:var(--muted);letter-spacing:1px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}.time{font-variant-numeric:tabular-nums;font-size:28px;font-weight:800}.meter{height:5px;background:#252b37;border-radius:8px;overflow:hidden;margin-top:12px}.meter>i{display:block;height:100%;width:0;background:var(--cyan)}
+.tracklist{display:grid;gap:5px;max-height:510px;overflow:auto}.track{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid transparent;border-radius:10px;background:#0e1118}.track.active{border-color:#397d78;background:#142321}.num{width:26px;color:#788397;font-size:11px;font-weight:800}.trackname{flex:1;font-weight:700;font-size:13px}.track small{display:block;color:var(--muted);font-weight:400;margin-top:3px}.track button{padding:7px 9px;font-size:11px}
+label{font-size:12px;color:var(--muted)}input[type=number]{width:75px;background:#090c12;color:white;border:1px solid var(--line);border-radius:8px;padding:9px}
+.pulse{width:15px;height:15px;border-radius:50%;background:#343a46;display:inline-block;margin-right:8px}.pulse.on{background:var(--cyan);box-shadow:0 0 18px var(--cyan)}
+#apple{width:100%;height:170px;border:0;border-radius:12px;background:#090c12}
+.cues{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.cues button{min-height:58px}
+footer{text-align:center;color:#778092;font-size:11px;padding:12px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(3,1fr)}header{position:relative}.tracklist{max-height:430px}.cues{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<header><div class="head"><div><div class="kicker">ANISS STUDIO • TOUR PRODUCTION</div><h1>LIVE SHOW CONTROL</h1></div><div class="live">● SHOW MODE</div></div></header>
+<main>
+<div class="grid">
+<section class="panel">
+<h2>NOW PLAYING / SETLIST</h2><div class="sub" id="trackNo">TRACK 01 / 28</div><div class="now" id="current">Baptized in Fire</div><div class="sub">THE WEEKND • SET DURATION TARGET: 90:00</div>
+<div class="controls"><button class="primary" onclick="prevTrack()">◀ PREV</button><button class="primary" onclick="nextTrack()">NEXT ▶</button><button onclick="resetShow()">RESET SHOW</button></div>
+<div class="stats"><div class="stat"><b id="elapsed">00:00</b><span>SHOW CLOCK</span></div><div class="stat"><b id="remaining">90:00</b><span>TIME TO TARGET</span></div><div class="stat"><b id="progress">0%</b><span>SETLIST</span></div></div>
+<div class="meter"><i id="bar"></i></div>
+</section>
+<section class="panel">
+<h2>CLICK / TEMPO ENGINE</h2><div class="row"><div><span class="pulse" id="pulse"></span><b id="clickState">CLICK STOPPED</b></div><div class="time" id="beat">—</div></div>
+<div class="controls" style="align-items:end"><div><label>BPM</label><br><input id="bpm" type="number" min="40" max="240" value="120"></div><div><label>TIME SIGNATURE</label><br><select id="sig" style="background:#090c12;color:white;border:1px solid #343c4b;border-radius:8px;padding:10px"><option value="4">4/4</option><option value="3">3/4</option><option value="6">6/8 (quarter pulse)</option></select></div></div>
+<div class="controls"><button class="primary" onclick="toggleClick()" id="clickBtn">START CLICK</button><button onclick="tapTempo()">TAP TEMPO</button><button onclick="countIn()">2 BAR COUNT-IN</button></div>
+<p class="sub">Tempo réglable : le click est une référence de répétition, pas un BPM vérifié des masters.</p>
+</section>
+</div>
+<div class="grid">
+<section class="panel">
+<h2>REGIE • CUES RAPIDES</h2><div class="cues">
+<button onclick="cue('STANDBY. Musicians ready.')">STANDBY</button><button onclick="countIn()">COUNT-IN 2 BARS</button>
+<button onclick="cue('GO!')">GO</button><button onclick="cue('LAST CHORUS. Prepare the ending.')">LAST CHORUS</button>
+<button onclick="cue('NEXT SONG. Standby.')">NEXT SONG</button><button class="danger" onclick="cue('STOP. STOP. STOP.')">EMERGENCY STOP</button>
+</div><p class="sub" id="cueText" aria-live="polite">Cue ready. Les appels sont affichés à l'écran et annoncés par synthèse vocale si disponible.</p>
+</section>
+<section class="panel">
+<h2>APPLE MUSIC • SOURCE AUDIO</h2>
+<iframe id="apple" allow="autoplay *; encrypted-media *; fullscreen *; clipboard-write" sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-top-navigation-by-user-activation" src="https://embed.music.apple.com/fr/playlist/set-list-le-after-hours-til-dawn-tour-de-the-weeknd/pl.2510d5601e3a49d4a62e39b3eb3018cf"></iframe>
+<div class="sub">Connecte-toi à Apple Music dans le lecteur si demandé. La lecture dépend de ton abonnement et de la disponibilité du lecteur Apple.</div>
+</section>
+</div>
+<section class="panel"><div class="row"><h2>28-SONG RUNNING ORDER</h2><span class="sub">Appuie sur un titre pour le sélectionner</span></div><div class="tracklist" id="list"></div></section>
+<section class="panel"><h2>PRODUCTION NOTES / LIMITES</h2><div class="sub">Cette V1 est une console de répétition : sélection de titre, horloge de show, click réglable, décompte 2 mesures et appels de régie. Les appels et les clicks ne sont pas encore calés sur les mesures exactes des morceaux. Le lecteur Apple Music permet d'écouter la playlist, mais ce navigateur ne peut pas extraire les fichiers, créer les stems séparés ni synchroniser automatiquement les cues avec les morceaux protégés. Les timings exacts doivent être relevés sur les versions live/arrangements choisis.</div></section>
+<footer>ANISS STUDIO • LIVE SHOW CONTROL • V1.0 • iPhone / iPad / Desktop</footer>
+</main>
+<script>
+const tracks=["Baptized in Fire","Open Hearts","Wake Me Up","After Hours","Starboy","Heartless","Cry for Me","São Paulo","Take My Breath","Sacrifice","How Do I Make You Love Me?","Can't Feel My Face","Lost in the Fire","Timeless","Popular","Often","The Hills","One of the Girls","Out of Time","I Feel It Coming","Die for You","Is There Someone Else?","Call Out My Name","Save Your Tears","Less Than Zero","Blinding Lights","House of Balloons","Moth to a Flame"];
+let index=0,showStart=null,elapsedBase=0,clockTimer=null,clickTimer=null,beatN=0,audio=null,lastTap=0,taps=[];
+const $=id=>document.getElementById(id);
+function render(){ $("current").textContent=tracks[index];$("trackNo").textContent=`TRACK ${String(index+1).padStart(2,"0")} / 28`;$("progress").textContent=Math.round((index+1)/28*100)+"%";document.querySelectorAll(".track").forEach((x,i)=>x.classList.toggle("active",i===index));}
+function build(){ $("list").innerHTML=tracks.map((t,i)=>`<div class="track ${i===0?'active':''}" onclick="selectTrack(${i})"><span class="num">${String(i+1).padStart(2,"0")}</span><span class="trackname">${t}<small>TRACK ${i+1} • cue sheet to validate</small></span><button onclick="event.stopPropagation();selectTrack(${i})">SELECT</button></div>`).join("");}
+function selectTrack(i){index=i;render();}
+function nextTrack(){index=Math.min(27,index+1);render();}
+function prevTrack(){index=Math.max(0,index-1);render();}
+function resetShow(){showStart=null;elapsedBase=0;index=0;render();updateClock();}
+function updateClock(){let s=elapsedBase+(showStart?Math.floor((Date.now()-showStart)/1000):0);$("elapsed").textContent=fmt(s);$("remaining").textContent=fmt(Math.max(0,5400-s));$("bar").style.width=Math.min(100,s/5400*100)+"%";}
+function fmt(s){return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+function startClock(){if(!showStart){showStart=Date.now();clockTimer=setInterval(updateClock,500)}}
+function getAudio(){if(!audio)audio=new (window.AudioContext||window.webkitAudioContext)();if(audio.state==="suspended")audio.resume();return audio}
+function tick(accent=false){const a=getAudio(),o=a.createOscillator(),g=a.createGain();o.type="sine";o.frequency.value=accent?1450:950;g.gain.setValueAtTime(accent?.18:.11,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.045);o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+.05);$("pulse").classList.add("on");setTimeout(()=>$("pulse").classList.remove("on"),65)}
+function toggleClick(){if(clickTimer){clearInterval(clickTimer);clickTimer=null;$("clickBtn").textContent="START CLICK";$("clickState").textContent="CLICK STOPPED";$("beat").textContent="—";return}let bpm=Math.max(40,Math.min(240,Number($("bpm").value)||120));let sig=Number($("sig").value);let interval=60000/bpm;beatN=0;tick(true);$("clickState").textContent="CLICK RUNNING";$("clickBtn").textContent="STOP CLICK";$("beat").textContent="1";clickTimer=setInterval(()=>{beatN=(beatN+1)%sig;tick(beatN===0);$("beat").textContent=String(beatN+1)},interval)}
+function countIn(){let bpm=Math.max(40,Math.min(240,Number($("bpm").value)||120));let sig=Number($("sig").value),n=8*sig/4,k=0;cue("COUNT-IN");let h=setInterval(()=>{tick(k%(sig)===0);$("beat").textContent=String(k%sig+1);k++;if(k>=n){clearInterval(h);cue("GO!")}},60000/bpm)}
+function tapTempo(){let now=Date.now();if(lastTap&&now-lastTap<2500){taps.push(now-lastTap);taps=taps.slice(-5);$("bpm").value=Math.round(60000/(taps.reduce((a,b)=>a+b,0)/taps.length))}else taps=[];lastTap=now}
+function cue(t){$("cueText").textContent=t;if("speechSynthesis"in window){speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(t);u.lang="en-US";u.rate=1.05;speechSynthesis.speak(u)}}
+build();render();updateClock();
+</script></body></html>
